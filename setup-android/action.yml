@@ -22,10 +22,6 @@ inputs:
     description: 'Android cmdline-tools version.'
     required: false
     default: 'latest'
-  cache-gradle:
-    description: 'Cache Gradle dependencies via actions/setup-java.'
-    required: false
-    default: 'true'
 
   working-directory:
     description: 'Directory in which to run `nebula-pack build` and `nebula-pack package`.'
@@ -69,7 +65,6 @@ runs:
       with:
         distribution: ${{ inputs.java-distribution }}
         java-version: ${{ inputs.java-version }}
-        cache: ${{ inputs.cache-gradle == 'true' && 'gradle' || '' }}
 
     - name: Setup Android SDK
       uses: android-actions/setup-android@v4
