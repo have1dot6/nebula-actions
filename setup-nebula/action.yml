@@ -40,6 +40,7 @@ outputs:
 
 runs:
   using: 'composite'
+
   steps:
     - name: Setup Node.js with private registry auth
       uses: actions/setup-node@v4
@@ -48,25 +49,29 @@ runs:
         registry-url: ${{ inputs.registry }}
       env:
         NODE_AUTH_TOKEN: ${{ inputs.registry-token }}
-    
+
+    - name: Configure npm scope
+      shell: bash
+      env:
+        REGISTRY: ${{ inputs.registry }}
+      run: |
+        npm config set "@zeniein:registry" "$REGISTRY"
+
     - name: Setup pnpm
       uses: pnpm/action-setup@v4
       with:
         version: ${{ inputs.pnpm-version }}
-    
-    
+
     - name: Install Nebula Pack CLI
       shell: bash
       run: |
         echo "Installing @zeniein/nebula-pack-cli@${{ inputs.cli-version }}"
-        npm install -g @zeniein/nebula-pack-cli@${{ inputs.cli-version }}
+        npm install -g "@zeniein/nebula-pack-cli@${{ inputs.cli-version }}"
 
     - name: Run nebula-pack init
       id: init
       if: inputs.run-init == 'true'
       shell: bash
       working-directory: ${{ inputs.working-directory }}
-      env:
-        NODE_AUTH_TOKEN: ${{ inputs.registry-token }}
       run: |
         nebula-pack init
