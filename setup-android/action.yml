@@ -1,0 +1,127 @@
+name: 'Nebula Pack Android Build'
+description: 'Set up JDK + Android SDK, run `nebula-pack build -p mobile` and `nebula-pack package -p mobile -t android`, then upload the built APK/AAR (resolved by glob under `${outputDir}/mobile/android`) to a GitHub Release. Pass `debug: "true"` to emit a debug package (-d). Assumes `setup-nebula` has already been invoked earlier in the job.'
+
+inputs:
+  java-version:
+    description: 'JDK version. AGP 8.7 requires JDK 17.'
+    required: false
+    default: '17'
+  java-distribution:
+    description: 'JDK distribution (actions/setup-java supported value).'
+    required: false
+    default: 'temurin'
+  android-compile-sdk:
+    description: 'android.compileSdkVersion to install via setup-android.'
+    required: false
+    default: '35'
+  android-build-tools:
+    description: 'android.buildToolsVersion to install.'
+    required: false
+    default: '35.0.0'
+  android-cmdline-tools-version:
+    description: 'Android cmdline-tools version.'
+    required: false
+    default: 'latest'
+  cache-gradle:
+    description: 'Cache Gradle dependencies via actions/setup-java.'
+    required: false
+    default: 'true'
+
+  working-directory:
+    description: 'Directory in which to run `nebula-pack build` and `nebula-pack package`.'
+    required: false
+    default: '.'
+  debug:
+    description: 'Emit a debug package (adds -d to `nebula-pack package`).'
+    required: false
+    default: 'false'
+
+  output-dir:
+    description: 'Build output directory. Should match `outputDir` in nebula.config.ts. The action uploads files matched by `artifact-pattern` from within `${outputDir}/mobile/android` (a native Android project structure that contains the built APK/AAR under `*/build/outputs/`).'
+    required: false
+    default: './dist'
+  artifact-pattern:
+    description: 'Glob pattern(s) for files to upload, relative to `${outputDir}/mobile/android`. Space-separated, supports `**`. Defaults to `**/*.apk **/*.aar`.'
+    required: false
+    default: '**/*.apk **/*.aar'
+  upload:
+    description: 'Upload the matched artifacts as Release assets. Set to "false" to skip.'
+    required: false
+    default: 'true'
+  release-tag:
+    description: 'Tag of the GitHub Release to upload to (e.g. `v1.0.0`). Required when upload is `true`. The release must already exist.'
+    required: false
+    default: ''
+  release-repo:
+    description: 'Target repo for the release in `owner/repo` form. Defaults to the action execution repo. For cross-repo uploads, supply a PAT via `github-token`.'
+    required: false
+    default: ${{ github.repository }}
+  github-token:
+    description: 'Token with `contents: write` on `release-repo`. Defaults to the job `GITHUB_TOKEN` (only works for same-repo releases).'
+    required: false
+    default: ${{ secrets.GITHUB_TOKEN }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: ${{ inputs.java-distribution }}
+        java-version: ${{ inputs.java-version }}
+        cache: ${{ inputs.cache-gradle == 'true' && 'gradle' || '' }}
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+      with:
+        compile-sdk: ${{ inputs.android-compile-sdk }}
+        build-tools: ${{ inputs.android-build-tools }}
+        cmdline-tools-version: ${{ inputs.android-cmdline-tools-version }}
+
+    - name: Run nebula-pack build
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: nebula-pack build -p mobile
+
+    - name: Run nebula-pack package
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        if [ "${{ inputs.debug }}" = "true" ]; then
+          nebula-pack package -p mobile -t android -d
+        else
+          nebula-pack package -p mobile -t android
+        fi
+
+    - name: Upload Android artifact to GitHub Release
+      if: inputs.upload == 'true'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        GH_REPO: ${{ inputs.release-repo }}
+      run: |
+        set -e
+        if [ -z "${{ inputs.release-tag }}" ]; then
+          echo "::error::release-tag input is required when upload is 'true'"
+          exit 1
+        fi
+        SRC="${{ inputs.output-dir }}/mobile/android"
+        if [ ! -d "$SRC" ]; then
+          echo "::error::Android project directory not found at $SRC (resolved against working-directory: ${{ inputs.working-directory }})"
+          exit 1
+        fi
+        shopt -s globstar nullglob
+        files=()
+        for pattern in ${{ inputs.artifact-pattern }}; do
+          for f in "$SRC"/$pattern; do
+            [ -f "$f" ] && files+=("$f")
+          done
+        done
+        if [ ${#files[@]} -eq 0 ]; then
+          echo "::error::No files matching '${{ inputs.artifact-pattern }}' under $SRC"
+          exit 1
+        fi
+        echo "Uploading ${#files[@]} artifact(s) to release ${{ inputs.release-tag }} on $GH_REPO:"
+        printf '  %s\n' "${files[@]}"
+        gh release upload "${{ inputs.release-tag }}" "${files[@]}" --repo "$GH_REPO" --clobber
