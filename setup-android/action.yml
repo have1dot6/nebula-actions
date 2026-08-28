@@ -79,6 +79,7 @@ runs:
       run: |
         echo "Running nebula-pack build -p mobile -v, working-directory: ${{ inputs.working-directory }}"
         pwd
+        ls -la
         nebula-pack build -p mobile -v
 
     - name: Run nebula-pack package
