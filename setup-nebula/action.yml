@@ -12,7 +12,6 @@ inputs:
   registry-token:
     description: 'Token sent as NODE_AUTH_TOKEN for the private registry. Defaults to inputs.github-token.'
     required: false
-    default: ${{ inputs.github-token }}
   cli-version:
     description: '@zeniein/nebula-pack-cli version to install (via npx). Keep in sync with the published package version (packages/pack-cli/package.json).'
     required: false
