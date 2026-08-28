@@ -27,6 +27,7 @@ Gradle 走工程内 wrapper(`gradlew`),本 action 不下载 Gradle。详细 inpu
 - uses: have1dot6/nebula-actions/setup-android@<ref>
   with:
     release-tag: v1.0.0
+    github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 打 debug 包(只发 debug 包的 APK,过滤掉其它):
@@ -38,6 +39,7 @@ Gradle 走工程内 wrapper(`gradlew`),本 action 不下载 Gradle。详细 inpu
     release-tag: v1.0.0-debug
     debug: 'true'
     artifact-pattern: '**/build/outputs/apk/debug/*.apk'
+    github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 `nebula.config.ts` 不在仓库根(`outputDir: './dist'` 解析自 `./mobile/nebula.config.ts`):
@@ -48,6 +50,7 @@ Gradle 走工程内 wrapper(`gradlew`),本 action 不下载 Gradle。详细 inpu
   with:
     release-tag: v1.0.0
     working-directory: ./mobile
+    github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 同时上传 APK + mapping.txt(用于 crash 反混淆):
@@ -57,6 +60,7 @@ Gradle 走工程内 wrapper(`gradlew`),本 action 不下载 Gradle。详细 inpu
   with:
     release-tag: v1.0.0
     artifact-pattern: '**/*.apk **/mapping.txt'
+    github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 跳过上传(只想 build/package):
@@ -84,6 +88,6 @@ Gradle 走工程内 wrapper(`gradlew`),本 action 不下载 Gradle。详细 inpu
 
 - `artifact-pattern` 相对于 `${outputDir}/mobile/android`(解析自 `working-directory`),支持 `**` 递归;多个 pattern 用空格分隔。默认值 `**/*.apk **/*.aar` 会匹配整棵 android 子树里的所有 APK 和 AAR。
 - 匹配不到任何文件时直接 `::error::` 失败,避免空上传被静默吞掉。
-- `release-repo` 默认 `${{ github.repository }}`(即 action 执行 repo);同 repo 上传可用默认 `${{ secrets.GITHUB_TOKEN }}`,跨 repo 必须用 PAT。
+- `release-repo` 默认 `${{ github.repository }}`(即 action 执行 repo);`upload: 'true'` 时必须显式传 `github-token`,同 repo 传 `${{ secrets.GITHUB_TOKEN }}`,跨 repo 必须用 PAT。
 - `gh release upload --clobber` 会覆盖同名 asset,适合 release 重跑场景。
 - 匹配到的所有文件会以原文件名挂到 release;若想重命名,请在外层 workflow 提前处理。

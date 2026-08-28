@@ -57,9 +57,9 @@ inputs:
     required: false
     default: ${{ github.repository }}
   github-token:
-    description: 'Token with `contents: write` on `release-repo`. Defaults to the job `GITHUB_TOKEN` (only works for same-repo releases).'
+    description: 'Token with `contents: write` on `release-repo`. Required when upload is `true`; call with the workflow GITHUB_TOKEN for same-repo releases, or a PAT for cross-repo.'
     required: false
-    default: ${{ secrets.GITHUB_TOKEN }}
+    default: ''
 
 runs:
   using: 'composite'

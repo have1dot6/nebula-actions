@@ -6,10 +6,13 @@ inputs:
     description: 'Private npm registry URL. Defaults to GitHub Packages.'
     required: false
     default: 'https://npm.pkg.github.com'
-  auth-token:
-    description: 'Token for the private registry. Defaults to ${{ secrets.GITHUB_TOKEN }} when running in CI.'
+  github-token:
+    description: GitHub token
+    required: true
+  registry-token:
+    description: 'Token sent as NODE_AUTH_TOKEN for the private registry. Defaults to inputs.github-token.'
     required: false
-    default: ${{ secrets.GITHUB_TOKEN }}
+    default: ${{ inputs.github-token }}
   cli-version:
     description: '@zeniein/nebula-pack-cli version to install (via npx). Keep in sync with the published package version (packages/pack-cli/package.json).'
     required: false
@@ -45,7 +48,7 @@ runs:
         node-version: ${{ inputs.node-version }}
         registry-url: ${{ inputs.registry }}
       env:
-        NODE_AUTH_TOKEN: ${{ inputs.auth-token }}
+        NODE_AUTH_TOKEN: ${{ inputs.registry-token }}
     
     - name: Setup pnpm
       uses: pnpm/action-setup@v4
@@ -65,6 +68,6 @@ runs:
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       env:
-        NODE_AUTH_TOKEN: ${{ inputs.auth-token }}
+        NODE_AUTH_TOKEN: ${{ inputs.registry-token }}
       run: |
         nebula-pack init

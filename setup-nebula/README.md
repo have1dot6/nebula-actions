@@ -11,6 +11,8 @@
 ```yaml
 - uses: actions/checkout@v4
 - uses: have1dot6/nebula-actions/setup-nebula@<ref>
+  with:
+    github-token: ${{ secrets.GITHUB_TOKEN }}
 - run: npx @zeniein/nebula-pack-cli build --platform android
 ```
 
@@ -18,5 +20,5 @@
 
 ## 备注
 
-- 默认 `auth-token` 是 `${{ secrets.GITHUB_TOKEN }}`,本地需自填 PAT。
+- `github-token` 为必需 input,需由调用方传入(通常为 `${{ secrets.GITHUB_TOKEN }}`);`registry-token` 默认回退到 `github-token`,本地可自填 PAT。
 - `init` 是幂等的:config 已存在时仅 warn,不报错。
