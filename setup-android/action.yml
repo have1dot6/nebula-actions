@@ -65,14 +65,14 @@ runs:
   using: 'composite'
   steps:
     - name: Setup JDK
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v6
       with:
         distribution: ${{ inputs.java-distribution }}
         java-version: ${{ inputs.java-version }}
         cache: ${{ inputs.cache-gradle == 'true' && 'gradle' || '' }}
 
     - name: Setup Android SDK
-      uses: android-actions/setup-android@v3
+      uses: android-actions/setup-android@v4
       with:
         compile-sdk: ${{ inputs.android-compile-sdk }}
         build-tools: ${{ inputs.android-build-tools }}

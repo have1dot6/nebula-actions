@@ -43,7 +43,7 @@ runs:
 
   steps:
     - name: Setup Node.js with private registry auth
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v7
       with:
         node-version: ${{ inputs.node-version }}
         registry-url: ${{ inputs.registry }}
@@ -58,7 +58,7 @@ runs:
         npm config set "@zeniein:registry" "$REGISTRY"
 
     - name: Setup pnpm
-      uses: pnpm/action-setup@v4
+      uses: pnpm/action-setup@v6
       with:
         version: ${{ inputs.pnpm-version }}
 
